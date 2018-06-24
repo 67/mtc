@@ -1,18 +1,10 @@
+from . import config, errors
 import urllib.parse
 import random
 from requests import Session
 import json
 
-
-class e621Error(Exception):
-    pass
-
-
 session = Session()
-url = 'https://e621.net/'
-headers = {
-    'User-Agent': 'MTC/0.0.9 (https://github.com/67/mtc)'
-}
 
 
 class Post(object):
@@ -21,10 +13,10 @@ class Post(object):
     def __init__(self, data=None, id=None):
         """Create a post instance."""
         if id is not None:
-            contents = json.loads(session.get(f"{url}post/show.json?&id={id}", headers=headers).text)
-            data = contents
+            contents = json.loads(session.get(f"{config.url}post/show.json?&id={id}", headers=config.headers).text)
+            self.data = contents
             if not contents.get('success', True):
-                raise e621Error(contents.get('reason'))
+                raise errors.E621Error(contents.get('reason'))
         if data is not None:
             self.data = data
 
@@ -172,11 +164,11 @@ def search(tags, limit=75):
     """Gets posts from a certain set of tags."""
     posts = []
     tags = urllib.parse.quote(tags.encode('utf-8'))
-    query = f"{url}post/index.json?&tags={tags}&limit={limit}"
-    contents = json.loads(session.get(query, headers=headers).text)
+    query = f"{config.url}post/index.json?&tags={tags}&limit={limit}"
+    contents = json.loads(session.get(query, headers=config.headers).text)
     try:
         if not contents.get('success', True):
-            raise e621Error(contents.get('reason'))
+            raise errors.E621Error(contents.get('reason'))
     except AttributeError:
         pass
     for p in contents:
@@ -198,14 +190,14 @@ def get_post_by_id(id):
 def recent(tags=None, limit=100):
     """Gets recent posts, optionally with some tags."""
     posts = []
-    query = f"{url}post/index.json?&limit={limit}"
+    query = f"{config.url}post/index.json?&limit={limit}"
     if tags is not None:
         tags = urllib.parse.quote(tags.encode('utf-8'))
         query += f"&tags={tags}"
-    contents = json.loads(session.get(query, headers=headers).text)
+    contents = json.loads(session.get(query, headers=config.headers).text)
     try:
         if not contents.get('success', True):
-            raise e621Error(contents.get('reason'))
+            raise errors.E621Error(contents.get('reason'))
     except AttributeError:
         pass
     for p in contents:
